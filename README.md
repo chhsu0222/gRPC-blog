@@ -13,3 +13,7 @@ https://godoc.org/github.com/mongodb/mongo-go-driver/mongo
 # MongoDB Go Driver
 
 https://github.com/mongodb/mongo-go-driver
+
+# Type assertion
+
+https://golang.org/ref/spec#Type_assertions

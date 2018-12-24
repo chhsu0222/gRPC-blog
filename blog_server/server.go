@@ -8,6 +8,9 @@ import (
 	"os"
 	"os/signal"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 
 	"github.com/chhsu0222/gRPC-blog/blogpb"
@@ -25,6 +28,41 @@ type blogItem struct {
 	AuthorID string             `bson:"author_id"`
 	Content  string             `bson:"content"`
 	Title    string             `bson:"title"`
+}
+
+func (*server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) (*blogpb.CreateBlogResponse, error) {
+	blog := req.GetBlog()
+
+	data := blogItem{
+		AuthorID: blog.GetAuthorId(),
+		Title:    blog.GetTitle(),
+		Content:  blog.GetContent(),
+	}
+
+	result, err := collection.InsertOne(context.Background(), data)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Internal error: %v", err),
+		)
+	}
+	// Type assertion
+	oid, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Cannot convert to OID"),
+		)
+	}
+
+	return &blogpb.CreateBlogResponse{
+		Blog: &blogpb.Blog{
+			Id:       oid.Hex(),
+			AuthorId: blog.GetAuthorId(),
+			Title:    blog.GetTitle(),
+			Content:  blog.GetContent(),
+		},
+	}, nil
 }
 
 func main() {
