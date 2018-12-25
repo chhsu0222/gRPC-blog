@@ -17,3 +17,7 @@ https://github.com/mongodb/mongo-go-driver
 # Type assertion
 
 https://golang.org/ref/spec#Type_assertions
+
+# Update documents (mongo-go-driver)
+
+https://www.mongodb.com/blog/post/mongodb-go-driver-tutorial

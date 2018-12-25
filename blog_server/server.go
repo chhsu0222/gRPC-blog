@@ -99,6 +99,54 @@ func (*server) ReadBlog(ctx context.Context, req *blogpb.ReadBlogRequest) (*blog
 	}, nil
 }
 
+func (*server) UpdateBlog(ctx context.Context, req *blogpb.UpdateBlogRequest) (*blogpb.UpdateBlogResponse, error) {
+	fmt.Println("Update Blog Request")
+	blog := req.GetBlog()
+	oid, err := primitive.ObjectIDFromHex(blog.GetId())
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			fmt.Sprintf("Cannot parse ID"),
+		)
+	}
+
+	filter := bson.D{{"_id", oid}}
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"author_id", blog.GetAuthorId()},
+			{"content", blog.GetContent()},
+		}},
+	}
+
+	result, err := collection.UpdateOne(nil, filter, update)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Internal error: %v", err),
+		)
+	}
+	if result.MatchedCount == 0 {
+		return nil, status.Errorf(
+			codes.NotFound,
+			fmt.Sprintf("Cannot find blog with specified ID: %v", err),
+		)
+	}
+
+	return &blogpb.UpdateBlogResponse{
+		Updated: true,
+	}, nil
+}
+
+func blogItemToBlogPb(data *blogItem) *blogpb.Blog {
+	return &blogpb.Blog{
+		Id:       data.ID.Hex(),
+		AuthorId: data.AuthorID,
+		Title:    data.Title,
+		Content:  data.Content,
+	}
+}
+
 func main() {
 	// if we crash the go code, we get the file name and line number
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
